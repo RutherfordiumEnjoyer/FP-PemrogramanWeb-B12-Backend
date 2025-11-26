@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-
+import { seedAirplaneGame } from './seed/airplane.seed';
 import { gameTemplateSeed, quizSeed, userSeed } from './seed';
 
 const prisma = new PrismaClient();
@@ -16,6 +16,7 @@ async function main() {
     process.exit(1);
   } finally {
     console.log('✅ Seeding success');
+    await seedAirplaneGame(prisma);
     await prisma.$disconnect();
   }
 }
