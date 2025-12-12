@@ -19,14 +19,13 @@ const app = express();
 
 app.use(
   cors({
-    // Izinkan Frontend port 3000 dan 5173 (cadangan)
-    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'], 
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: '*',
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   }),
 );
-
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
