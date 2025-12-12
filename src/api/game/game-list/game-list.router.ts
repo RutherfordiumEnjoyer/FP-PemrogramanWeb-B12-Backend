@@ -2,12 +2,20 @@
 /* eslint-disable import/no-default-export */
 import { Router } from 'express';
 
-import airplaneRouter from './airplane/airplane.router';
+import { AnagramController } from './anagram/anagram.controller';
+import { PairOrNoPairController } from './pair-or-no-pair/pair-or-no-pair.controller';
+import { SpeedSortingController } from './speed-sorting/speed-sorting.controller';
+import { TypeSpeedController } from './type-speed/type-speed.controller';
 import { QuizController } from './quiz/quiz.controller';
+import airplaneRouter from './airplane/airplane.router';
 
 const GameListRouter = Router();
 
 GameListRouter.use('/quiz', QuizController);
 GameListRouter.use('/airplane', airplaneRouter);
+GameListRouter.use('/speed-sorting', SpeedSortingController);
+GameListRouter.use('/anagram', AnagramController);
+GameListRouter.use('/pair-or-no-pair', PairOrNoPairController);
+GameListRouter.use('/type-speed', TypeSpeedController);
 
 export default GameListRouter;

@@ -1,23 +1,24 @@
+version: '3.8'
+
 services:
   database:
+    image: postgres:latest
     container_name: fp-database
     restart: unless-stopped
-    image: postgres:latest
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_NAME}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PGDATA: /var/lib/postgresql/data/pgdata
-    ports:
-      - ${POSTGRES_PORT}:5432
     volumes:
-      - ./docker/volumes/:/var/lib/postgresql/data
-    networks:
-      - fp-network
-
-networks:
-  fp-network:
-    driver: bridge
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  mysqldata:
+  postgres_data:
