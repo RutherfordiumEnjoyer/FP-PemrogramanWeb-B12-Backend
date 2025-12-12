@@ -1,21 +1,22 @@
 import fs from 'node:fs';
 import path from 'node:path';
+
 import multer from 'multer';
 
-const uploadDir = path.join(process.cwd(), 'uploads');
+const uploadDirectory = path.join(process.cwd(), 'uploads');
 
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+if (!fs.existsSync(uploadDirectory)) {
+  fs.mkdirSync(uploadDirectory, { recursive: true });
 }
 
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
+  destination: (_request, _file, callback) => {
+    callback(null, uploadDirectory);
   },
-  filename: (_req, file, cb) => {
+  filename: (_request, file, callback) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = path.extname(file.originalname);
-    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+    const extension = path.extname(file.originalname);
+    callback(null, `${file.fieldname}-${uniqueSuffix}${extension}`);
   },
 });
 
@@ -24,11 +25,11 @@ export const upload = multer({
   limits: {
     fileSize: 5 * 1024 * 1024,
   },
-  fileFilter: (_req, file, cb) => {
+  fileFilter: (_request, file, callback) => {
     if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
+      callback(null, true);
     } else {
-      cb(new Error('Only images are allowed!'));
+      callback(new Error('Only images are allowed!'));
     }
   },
 });

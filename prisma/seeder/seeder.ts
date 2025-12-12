@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-import { seedAirplaneGame } from './seed/airplane.seed';
+
 import { gameTemplateSeed, quizSeed, userSeed } from './seed';
+import { seedAirplaneGame } from './seed/airplane.seed';
 
 const prisma = new PrismaClient();
 

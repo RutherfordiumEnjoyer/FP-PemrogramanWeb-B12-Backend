@@ -1,4 +1,5 @@
-import { z } from 'zod';
+import { type z } from 'zod';
+
 import { CreateAirplaneSchema } from './create-airplane.schema';
 
 export const UpdateAirplaneSchema = CreateAirplaneSchema.partial();

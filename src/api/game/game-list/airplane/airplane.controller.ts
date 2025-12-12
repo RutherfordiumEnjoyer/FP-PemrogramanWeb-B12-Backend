@@ -1,117 +1,221 @@
-import { NextFunction, Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
+import { type NextFunction, type Request, type Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
+
 import { ErrorResponse } from '../../../../common/response';
 import { AirplaneService } from './airplane.service';
 
+interface RequestWithUser extends Request {
+  user?: {
+    user_id?: string;
+    id?: string;
+    sub?: string;
+  };
+}
+
+// Interface untuk Body agar Type Safe
+interface CreateGameBody {
+  title: string;
+  description: string;
+  game_data?: string | object;
+}
+
+interface UpdateGameBody {
+  title?: string;
+  description?: string;
+  game_data?: string | object;
+  is_published?: string | boolean;
+  is_publish?: string | boolean;
+}
+
 export class AirplaneController {
-  
-  static async create(req: Request, res: Response, next: NextFunction) {
+  // --- CREATE ---
+  static async create(
+    request: Request,
+    response: Response,
+    next: NextFunction,
+  ) {
     try {
-      const user = (req as any).user;
+      const { user } = request as RequestWithUser;
       const creatorId = user?.user_id || user?.id || user?.sub;
-      
+
       if (!creatorId) {
-        throw new ErrorResponse(StatusCodes.UNAUTHORIZED, "Unauthorized: No User ID");
+        throw new ErrorResponse(
+          StatusCodes.UNAUTHORIZED,
+          'Unauthorized: No User ID',
+        );
       }
 
-      const thumbnailFile = req.file;
-      const thumbnailPath = thumbnailFile ? `uploads/${thumbnailFile.filename}` : 'default_image.jpg';
+      const thumbnailFile = request.file;
+      const thumbnailPath = thumbnailFile
+        ? `uploads/${thumbnailFile.filename}`
+        : 'default_image.jpg';
 
-      const { title, description } = req.body;
+      // Gunakan interface CreateGameBody
+      const body = request.body as CreateGameBody;
+      const { title, description } = body;
 
-      let gameDataPayload;
+      let gameDataPayload: Prisma.JsonObject = {};
+
       try {
-        gameDataPayload = typeof req.body.game_data === 'string'
-          ? JSON.parse(req.body.game_data)
-          : req.body.game_data;
-      } catch (e) {
+        const rawGameData = body.game_data;
+
+        if (typeof rawGameData === 'string') {
+          gameDataPayload = JSON.parse(rawGameData) as Prisma.JsonObject;
+        } else if (typeof rawGameData === 'object') {
+          gameDataPayload = rawGameData as Prisma.JsonObject;
+        }
+      } catch {
         gameDataPayload = {};
       }
 
-      const result = await AirplaneService.create({
-        title,
-        description,
-        game_data: gameDataPayload,
-        thumbnail_image: thumbnailPath,
-      }, creatorId);
+      const result = await AirplaneService.create(
+        {
+          title,
+          description,
+          game_data: gameDataPayload,
+          thumbnail_image: thumbnailPath,
+        },
+        creatorId,
+      );
 
-      res.status(StatusCodes.CREATED).json({ success: true, message: 'Airplane game created successfully', data: result });
-    } catch (error: any) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        return res.status(StatusCodes.CONFLICT).json({
+      response.status(StatusCodes.CREATED).json({
+        success: true,
+        message: 'Airplane game created successfully',
+        data: result,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        return response.status(StatusCodes.CONFLICT).json({
           status: false,
-          message: 'Game with this title already exists. Please choose another title.'
+          message:
+            'Game with this title already exists. Please choose another title.',
         });
       }
-      next(error); 
+
+      next(error);
     }
   }
 
-  static async findAll(req: Request, res: Response, next: NextFunction) {
+  // --- FIND ALL ---
+  static async findAll(
+    request: Request,
+    response: Response,
+    next: NextFunction,
+  ) {
     try {
-      const result = await AirplaneService.findAll(req);
-      res.status(StatusCodes.OK).json(result);
-    } catch (error) { next(error); }
+      const result = await AirplaneService.findAll(request);
+      response.status(StatusCodes.OK).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
-  static async findOne(req: Request, res: Response, next: NextFunction) {
+  // --- FIND ONE ---
+  static async findOne(
+    request: Request,
+    response: Response,
+    next: NextFunction,
+  ) {
     try {
-      const result = await AirplaneService.findOne(req.params.id);
-      res.status(StatusCodes.OK).json({ success: true, data: result });
-    } catch (error) { next(error); }
+      const result = await AirplaneService.findOne(request.params.id);
+      response.status(StatusCodes.OK).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
   }
 
-  static async update(req: Request, res: Response, next: NextFunction) {
+  // --- UPDATE ---
+  static async update(
+    request: Request,
+    response: Response,
+    next: NextFunction,
+  ) {
     try {
-      const user = (req as any).user;
+      const { user } = request as RequestWithUser;
       const creatorId = user?.user_id || user?.id;
 
-      const thumbnailFile = req.file;
-      const thumbnailPath = thumbnailFile ? `uploads/${thumbnailFile.filename}` : undefined;
+      const thumbnailFile = request.file;
+      const thumbnailPath = thumbnailFile
+        ? `uploads/${thumbnailFile.filename}`
+        : undefined;
 
-      let gameDataPayload;
-      if (req.body.game_data) {
+      let gameDataPayload: Prisma.JsonObject | undefined;
+      const body = request.body as UpdateGameBody;
+
+      if (body.game_data) {
         try {
-          gameDataPayload = typeof req.body.game_data === 'string'
-            ? JSON.parse(req.body.game_data)
-            : req.body.game_data;
-        } catch { }
+          gameDataPayload =
+            typeof body.game_data === 'string'
+              ? (JSON.parse(body.game_data) as Prisma.JsonObject)
+              : (body.game_data as Prisma.JsonObject);
+        } catch {
+          // Ignore error
+        }
       }
 
       let isPublished: boolean | undefined;
-      if (req.body.is_published !== undefined) {
-          isPublished = req.body.is_published === 'true';
-      } else if (req.body.is_publish !== undefined) {
-          isPublished = req.body.is_publish === 'true';
+
+      if (body.is_published !== undefined) {
+        isPublished = String(body.is_published) === 'true';
+      } else if (body.is_publish !== undefined) {
+        isPublished = String(body.is_publish) === 'true';
       }
 
       const payload = {
-        title: req.body.title,
-        description: req.body.description,
+        title: body.title,
+        description: body.description,
         game_data: gameDataPayload,
-        is_published: isPublished
+        is_published: isPublished,
       };
 
-      const result = await AirplaneService.update(req.params.id, payload, creatorId, thumbnailPath);
-      res.status(StatusCodes.OK).json({ success: true, message: 'Game updated successfully', data: result });
-    } catch (error) { next(error); }
+      const result = await AirplaneService.update(
+        request.params.id,
+        payload,
+        creatorId as string,
+        thumbnailPath,
+      );
+      response.status(StatusCodes.OK).json({
+        success: true,
+        message: 'Game updated successfully',
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 
-  static async delete(req: Request, res: Response, next: NextFunction) {
+  // --- DELETE ---
+  static async delete(
+    request: Request,
+    response: Response,
+    next: NextFunction,
+  ) {
     try {
-      const user = (req as any).user;
+      const { user } = request as RequestWithUser;
       const creatorId = user?.user_id || user?.id;
 
-      await AirplaneService.delete(req.params.id, creatorId);
-      res.status(StatusCodes.OK).json({ success: true, message: 'Game deleted successfully' });
-    } catch (error) { next(error); }
+      await AirplaneService.delete(request.params.id, creatorId as string);
+      response
+        .status(StatusCodes.OK)
+        .json({ success: true, message: 'Game deleted successfully' });
+    } catch (error) {
+      next(error);
+    }
   }
 
-  static async play(req: Request, res: Response, next: NextFunction) {
+  // --- PLAY (INCREMENT COUNT) ---
+  static async play(request: Request, response: Response, next: NextFunction) {
     try {
-      await AirplaneService.play(req.params.id);
-      res.status(StatusCodes.OK).json({ success: true, message: 'Play count updated' });
-    } catch (error) { next(error); }
+      await AirplaneService.play(request.params.id);
+      response
+        .status(StatusCodes.OK)
+        .json({ success: true, message: 'Play count updated' });
+    } catch (error) {
+      next(error);
+    }
   }
 }

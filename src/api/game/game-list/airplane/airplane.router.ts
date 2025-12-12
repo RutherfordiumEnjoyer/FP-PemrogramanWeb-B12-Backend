@@ -1,49 +1,51 @@
 import { Router } from 'express';
+
 import { validateAuth } from '../../../../common/middleware';
-// Import upload middleware langsung dari filenya untuk menghindari error index
 import { upload } from '../../../../common/middleware/upload.middleware';
 import { AirplaneController } from './airplane.controller';
 
 const airplaneRouter = Router();
 
-// GET ALL (Public) - List semua game
-airplaneRouter.get('/', AirplaneController.findAll);
+airplaneRouter.get('/', (request, response, next) =>
+  AirplaneController.findAll(request, response, next),
+);
 
-// GET ONE (Public) - Detail game
-airplaneRouter.get('/:id', AirplaneController.findOne);
+airplaneRouter.get('/:id', (request, response, next) =>
+  AirplaneController.findOne(request, response, next),
+);
 
-// PLAY COUNT (Public) - Increment play count saat tombol exit ditekan
-airplaneRouter.post('/:id/play', AirplaneController.play);
-
-// CREATE (Protected + Upload) - Buat game baru
 airplaneRouter.post(
   '/',
   validateAuth({}),
   upload.single('thumbnail_image'),
-  AirplaneController.create
+  (request, response, next) =>
+    AirplaneController.create(request, response, next),
 );
 
-// UPDATE FULL (Protected + Upload) - Edit game (Judul, Deskripsi, Gambar)
 airplaneRouter.put(
   '/:id',
   validateAuth({}),
   upload.single('thumbnail_image'),
-  AirplaneController.update
+  (request, response, next) =>
+    AirplaneController.update(request, response, next),
 );
 
-// UPDATE PARTIAL (Protected + Upload) - Edit status publish atau info parsial
 airplaneRouter.patch(
   '/:id',
   validateAuth({}),
   upload.single('thumbnail_image'),
-  AirplaneController.update
+  (request, response, next) =>
+    AirplaneController.update(request, response, next),
 );
 
-// DELETE (Protected) - Hapus game
-airplaneRouter.delete(
-  '/:id',
-  validateAuth({}),
-  AirplaneController.delete
+airplaneRouter.delete('/:id', validateAuth({}), (request, response, next) =>
+  AirplaneController.delete(request, response, next),
 );
 
+// Endpoint Play Count (Public)
+airplaneRouter.post('/:id/play', (request, response, next) =>
+  AirplaneController.play(request, response, next),
+);
+
+// eslint-disable-next-line import/no-default-export
 export default airplaneRouter;

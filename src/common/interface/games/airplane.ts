@@ -6,5 +6,4 @@ export interface IAirplaneQuestion {
 
 export interface IAirplaneGameData {
   questions: IAirplaneQuestion[];
-  
 }
