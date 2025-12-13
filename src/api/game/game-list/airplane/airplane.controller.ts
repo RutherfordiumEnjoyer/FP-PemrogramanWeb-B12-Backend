@@ -13,7 +13,6 @@ interface RequestWithUser extends Request {
   };
 }
 
-// Interface untuk Body agar Type Safe
 interface CreateGameBody {
   title: string;
   description: string;
@@ -29,7 +28,6 @@ interface UpdateGameBody {
 }
 
 export class AirplaneController {
-  // --- CREATE ---
   static async create(
     request: Request,
     response: Response,
@@ -47,11 +45,14 @@ export class AirplaneController {
       }
 
       const thumbnailFile = request.file;
-      const thumbnailPath = thumbnailFile
-        ? `uploads/${thumbnailFile.filename}`
-        : 'default_image.jpg';
 
-      // Gunakan interface CreateGameBody
+      if (!thumbnailFile) {
+        throw new ErrorResponse(
+          StatusCodes.BAD_REQUEST,
+          'Thumbnail image is required',
+        );
+      }
+
       const body = request.body as CreateGameBody;
       const { title, description } = body;
 
@@ -74,7 +75,7 @@ export class AirplaneController {
           title,
           description,
           game_data: gameDataPayload,
-          thumbnail_image: thumbnailPath,
+          thumbnail_image: thumbnailFile,
         },
         creatorId,
       );
@@ -100,7 +101,6 @@ export class AirplaneController {
     }
   }
 
-  // --- FIND ALL ---
   static async findAll(
     request: Request,
     response: Response,
@@ -114,7 +114,6 @@ export class AirplaneController {
     }
   }
 
-  // --- FIND ONE ---
   static async findOne(
     request: Request,
     response: Response,
@@ -128,7 +127,6 @@ export class AirplaneController {
     }
   }
 
-  // --- UPDATE ---
   static async update(
     request: Request,
     response: Response,
@@ -139,9 +137,6 @@ export class AirplaneController {
       const creatorId = user?.user_id || user?.id;
 
       const thumbnailFile = request.file;
-      const thumbnailPath = thumbnailFile
-        ? `uploads/${thumbnailFile.filename}`
-        : undefined;
 
       let gameDataPayload: Prisma.JsonObject | undefined;
       const body = request.body as UpdateGameBody;
@@ -153,7 +148,7 @@ export class AirplaneController {
               ? (JSON.parse(body.game_data) as Prisma.JsonObject)
               : (body.game_data as Prisma.JsonObject);
         } catch {
-          // Ignore error
+          // Ignore
         }
       }
 
@@ -176,7 +171,7 @@ export class AirplaneController {
         request.params.id,
         payload,
         creatorId as string,
-        thumbnailPath,
+        thumbnailFile,
       );
       response.status(StatusCodes.OK).json({
         success: true,
@@ -188,7 +183,6 @@ export class AirplaneController {
     }
   }
 
-  // --- DELETE ---
   static async delete(
     request: Request,
     response: Response,
@@ -207,7 +201,6 @@ export class AirplaneController {
     }
   }
 
-  // --- PLAY (INCREMENT COUNT) ---
   static async play(request: Request, response: Response, next: NextFunction) {
     try {
       await AirplaneService.play(request.params.id);

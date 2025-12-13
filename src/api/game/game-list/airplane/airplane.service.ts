@@ -1,15 +1,16 @@
 import { type Request } from 'express';
 import { Prisma } from '@prisma/client';
 import { StatusCodes } from 'http-status-codes';
+import { v4 as uuidv4 } from 'uuid';
 
 import { prisma } from '../../../../common/config';
-import { type IAirplaneGameData } from '../../../../common/interface/games/airplane';
+import { FileManager } from '@/utils';
 import { ErrorResponse } from '../../../../common/response';
 import { type ICreateAirplane } from './schema/create-airplane.schema';
 import { type IUpdateAirplane } from './schema/update-airplane.schema';
 
 interface ICreateAirplaneParameters extends ICreateAirplane {
-  thumbnail_image: string;
+  thumbnail_image: Express.Multer.File;
 }
 
 export class AirplaneService {
@@ -25,18 +26,43 @@ export class AirplaneService {
       );
     }
 
-    const gameJsonData = data.game_data as unknown as Prisma.JsonObject;
+    const newGameId = uuidv4();
+
+    let fileContent: any;
+    
+    if (data.thumbnail_image.buffer) {
+       fileContent = data.thumbnail_image.buffer;
+    } else if (data.thumbnail_image.path) {
+       fileContent = await Bun.file(data.thumbnail_image.path).arrayBuffer();
+    } else {
+       throw new ErrorResponse(StatusCodes.BAD_REQUEST, "File upload failed: No buffer or path found.");
+    }
+
+    const fileToUpload = new File(
+      [fileContent],
+      data.thumbnail_image.originalname,
+      { type: data.thumbnail_image.mimetype },
+    );
+
+    const thumbnailImagePath = await FileManager.upload(
+      `game/airplane/${newGameId}`,
+      fileToUpload,
+    );
 
     return prisma.games.create({
       data: {
+        id: newGameId,
         name: data.title,
         description: data.description || '',
-        thumbnail_image: data.thumbnail_image,
-        game_json: gameJsonData,
+        thumbnail_image: thumbnailImagePath,
+        game_json: data.game_data as unknown as Prisma.InputJsonValue,
         creator_id: creatorId,
         game_template_id: template.id,
         is_published: true,
         total_played: 0,
+      },
+      select: {
+        id: true,
       },
     });
   }
@@ -51,7 +77,6 @@ export class AirplaneService {
 
     const where: Prisma.GamesWhereInput = {
       game_template_id: template?.id,
-      // deleted_at removed due to schema mismatch
       name: { contains: search as string, mode: 'insensitive' },
     };
 
@@ -61,7 +86,7 @@ export class AirplaneService {
         skip,
         take: Number(limit),
         orderBy: { created_at: 'desc' },
-        include: { creator: { select: { username: true } } }, // Fixed: name -> username
+        include: { creator: { select: { username: true } } },
       }),
       prisma.games.count({ where }),
     ]);
@@ -79,11 +104,8 @@ export class AirplaneService {
 
   static async findOne(id: string) {
     const game = await prisma.games.findFirst({
-      where: { 
-        id, 
-        // deleted_at removed due to schema mismatch
-      },
-      include: { creator: { select: { username: true } } }, // Fixed: name -> username
+      where: { id },
+      include: { creator: { select: { username: true } } },
     });
 
     if (!game) {
@@ -96,7 +118,7 @@ export class AirplaneService {
     id: string,
     data: IUpdateAirplane,
     creatorId: string,
-    thumbnailPath?: string,
+    thumbnailFile?: Express.Multer.File,
   ) {
     const game = await prisma.games.findFirst({
       where: { id, creator_id: creatorId },
@@ -113,12 +135,32 @@ export class AirplaneService {
       name: data.title,
       description: data.description,
       game_json: data.game_data
-        ? (data.game_data as unknown as IAirplaneGameData)
+        ? (data.game_data as unknown as Prisma.InputJsonValue)
         : undefined,
     };
 
-    if (thumbnailPath) {
-      updateData.thumbnail_image = thumbnailPath;
+    if (thumbnailFile) {
+      let fileContent: any;
+    
+      if (thumbnailFile.buffer) {
+         fileContent = thumbnailFile.buffer;
+      } else if (thumbnailFile.path) {
+         fileContent = await Bun.file(thumbnailFile.path).arrayBuffer();
+      } else {
+         throw new ErrorResponse(StatusCodes.BAD_REQUEST, "File upload failed: No buffer or path found.");
+      }
+
+      const fileToUpload = new File(
+        [fileContent],
+        thumbnailFile.originalname,
+        { type: thumbnailFile.mimetype },
+      );
+
+      const newThumbnailPath = await FileManager.upload(
+        `game/airplane/${id}`,
+        fileToUpload,
+      );
+      updateData.thumbnail_image = newThumbnailPath;
     }
 
     for (const key of Object.keys(updateData)) {
@@ -130,6 +172,9 @@ export class AirplaneService {
     return prisma.games.update({
       where: { id },
       data: updateData as Prisma.GamesUpdateInput,
+      select: {
+        id: true,
+      },
     });
   }
 
@@ -145,7 +190,6 @@ export class AirplaneService {
       );
     }
 
-    // Hard delete since deleted_at column is missing
     return prisma.games.delete({
       where: { id },
     });
