@@ -1,5 +1,5 @@
-import { type Prisma } from '@prisma/client';
 import { type Request } from 'express';
+import { Prisma } from '@prisma/client';
 import { StatusCodes } from 'http-status-codes';
 
 import { prisma } from '../../../../common/config';
@@ -51,7 +51,7 @@ export class AirplaneService {
 
     const where: Prisma.GamesWhereInput = {
       game_template_id: template?.id,
-      deleted_at: null,
+      // deleted_at removed due to schema mismatch
       name: { contains: search as string, mode: 'insensitive' },
     };
 
@@ -61,7 +61,7 @@ export class AirplaneService {
         skip,
         take: Number(limit),
         orderBy: { created_at: 'desc' },
-        include: { creator: { select: { name: true } } },
+        include: { creator: { select: { username: true } } }, // Fixed: name -> username
       }),
       prisma.games.count({ where }),
     ]);
@@ -79,14 +79,16 @@ export class AirplaneService {
 
   static async findOne(id: string) {
     const game = await prisma.games.findFirst({
-      where: { id, deleted_at: null },
-      include: { creator: { select: { name: true } } },
+      where: { 
+        id, 
+        // deleted_at removed due to schema mismatch
+      },
+      include: { creator: { select: { username: true } } }, // Fixed: name -> username
     });
 
     if (!game) {
       throw new ErrorResponse(StatusCodes.NOT_FOUND, 'Game not found');
     }
-
     return game;
   }
 
@@ -107,7 +109,6 @@ export class AirplaneService {
       );
     }
 
-    // Gunakan Record<string, unknown> agar aman saat di-loop
     const updateData: Record<string, unknown> = {
       name: data.title,
       description: data.description,
@@ -120,7 +121,6 @@ export class AirplaneService {
       updateData.thumbnail_image = thumbnailPath;
     }
 
-    // Cleaning undefined values safely
     for (const key of Object.keys(updateData)) {
       if (updateData[key] === undefined) {
         delete updateData[key];
@@ -129,7 +129,6 @@ export class AirplaneService {
 
     return prisma.games.update({
       where: { id },
-      // Cast ke any atau Prisma Update Input karena kita sudah membersihkannya
       data: updateData as Prisma.GamesUpdateInput,
     });
   }
@@ -146,9 +145,9 @@ export class AirplaneService {
       );
     }
 
-    return prisma.games.update({
+    // Hard delete since deleted_at column is missing
+    return prisma.games.delete({
       where: { id },
-      data: { deleted_at: new Date() },
     });
   }
 
