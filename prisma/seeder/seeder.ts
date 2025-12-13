@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
-import { gameTemplateSeed, quizSeed, userSeed } from './seed';
+import { gameTemplateSeed, quizSeed, spinTheWheelSeed, userSeed } from './seed';
 import { seedAirplaneGame } from './seed/airplane.seed';
 
 const prisma = new PrismaClient();
@@ -12,12 +12,14 @@ async function main() {
     await userSeed(process.env.NODE_ENV === 'production');
     await gameTemplateSeed();
     await quizSeed();
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    await spinTheWheelSeed();
+    await seedAirplaneGame(prisma);
+  } catch (error: unknown) {
     console.error('⛔ Seeding error:', error);
     process.exit(1);
   } finally {
     console.log('✅ Seeding success');
-    await seedAirplaneGame(prisma);
     await prisma.$disconnect();
   }
 }

@@ -1,10 +1,11 @@
+import { type Prisma } from '@prisma/client';
 import { type Request } from 'express';
-import { Prisma } from '@prisma/client';
 import { StatusCodes } from 'http-status-codes';
 import { v4 as uuidv4 } from 'uuid';
 
-import { prisma } from '../../../../common/config';
 import { FileManager } from '@/utils';
+
+import { prisma } from '../../../../common/config';
 import { ErrorResponse } from '../../../../common/response';
 import { type ICreateAirplane } from './schema/create-airplane.schema';
 import { type IUpdateAirplane } from './schema/update-airplane.schema';
@@ -28,18 +29,21 @@ export class AirplaneService {
 
     const newGameId = uuidv4();
 
-    let fileContent: any;
-    
+    let fileContent: unknown;
+
     if (data.thumbnail_image.buffer) {
-       fileContent = data.thumbnail_image.buffer;
+      fileContent = data.thumbnail_image.buffer;
     } else if (data.thumbnail_image.path) {
-       fileContent = await Bun.file(data.thumbnail_image.path).arrayBuffer();
+      fileContent = await Bun.file(data.thumbnail_image.path).arrayBuffer();
     } else {
-       throw new ErrorResponse(StatusCodes.BAD_REQUEST, "File upload failed: No buffer or path found.");
+      throw new ErrorResponse(
+        StatusCodes.BAD_REQUEST,
+        'File upload failed: No buffer or path found.',
+      );
     }
 
     const fileToUpload = new File(
-      [fileContent],
+      [fileContent as BlobPart],
       data.thumbnail_image.originalname,
       { type: data.thumbnail_image.mimetype },
     );
@@ -111,6 +115,7 @@ export class AirplaneService {
     if (!game) {
       throw new ErrorResponse(StatusCodes.NOT_FOUND, 'Game not found');
     }
+
     return game;
   }
 
@@ -140,18 +145,21 @@ export class AirplaneService {
     };
 
     if (thumbnailFile) {
-      let fileContent: any;
-    
+      let fileContent: unknown;
+
       if (thumbnailFile.buffer) {
-         fileContent = thumbnailFile.buffer;
+        fileContent = thumbnailFile.buffer;
       } else if (thumbnailFile.path) {
-         fileContent = await Bun.file(thumbnailFile.path).arrayBuffer();
+        fileContent = await Bun.file(thumbnailFile.path).arrayBuffer();
       } else {
-         throw new ErrorResponse(StatusCodes.BAD_REQUEST, "File upload failed: No buffer or path found.");
+        throw new ErrorResponse(
+          StatusCodes.BAD_REQUEST,
+          'File upload failed: No buffer or path found.',
+        );
       }
 
       const fileToUpload = new File(
-        [fileContent],
+        [fileContent as BlobPart],
         thumbnailFile.originalname,
         { type: thumbnailFile.mimetype },
       );
@@ -160,6 +168,7 @@ export class AirplaneService {
         `game/airplane/${id}`,
         fileToUpload,
       );
+
       updateData.thumbnail_image = newThumbnailPath;
     }
 
