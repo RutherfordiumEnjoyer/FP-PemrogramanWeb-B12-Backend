@@ -12,10 +12,10 @@ import { TypeSpeedController } from './type-speed/type-speed.controller';
 const GameListRouter = Router();
 
 GameListRouter.use('/quiz', QuizController);
-GameListRouter.use('/airplane', airplaneRouter);
 GameListRouter.use('/speed-sorting', SpeedSortingController);
 GameListRouter.use('/anagram', AnagramController);
 GameListRouter.use('/pair-or-no-pair', PairOrNoPairController);
 GameListRouter.use('/type-speed', TypeSpeedController);
+GameListRouter.use('/airplane', airplaneRouter);
 
 export default GameListRouter;
