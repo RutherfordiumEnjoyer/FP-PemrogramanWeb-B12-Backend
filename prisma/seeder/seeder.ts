@@ -14,7 +14,7 @@ async function main() {
     await quizSeed();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await spinTheWheelSeed();
-    await seedAirplaneGame(prisma);
+    await seedAirplaneGame();
   } catch (error: unknown) {
     console.error('⛔ Seeding error:', error);
     process.exit(1);
