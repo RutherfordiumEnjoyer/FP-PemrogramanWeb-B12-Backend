@@ -1,6 +1,10 @@
 import z from 'zod';
 
-import { fileSchema, StringToBooleanSchema, StringToObjectSchema } from '@/common';
+import {
+  fileSchema,
+  StringToBooleanSchema,
+  StringToObjectSchema,
+} from '@/common';
 
 const TrueOrFalseQuestionSchema = z.object({
   questionText: z.string().min(1),

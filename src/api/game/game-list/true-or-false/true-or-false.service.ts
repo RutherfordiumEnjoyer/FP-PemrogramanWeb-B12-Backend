@@ -2,7 +2,8 @@ import { type Prisma, type ROLE } from '@prisma/client';
 import { StatusCodes } from 'http-status-codes';
 import { v4 } from 'uuid';
 
-import { ErrorResponse, type ITrueOrFalseJson, prisma } from '@/common';
+import { ErrorResponse, prisma } from '@/common';
+import { type ITrueOrFalseJson } from '@/common/interface/games/true-or-false.interface';
 import { FileManager } from '@/utils';
 
 import {
@@ -147,7 +148,8 @@ export abstract class TrueOrFalseService {
 
     const gameJson: ITrueOrFalseJson = {
       countdown: data.game_json?.countdown ?? oldGameJson?.countdown ?? 30,
-      choices: data.game_json?.choices ?? oldGameJson?.choices ?? { A: 'True', B: 'False' },
+      choices: data.game_json?.choices ??
+        oldGameJson?.choices ?? { A: 'True', B: 'False' },
       questions: data.game_json?.questions ?? oldGameJson?.questions ?? [],
     };
 

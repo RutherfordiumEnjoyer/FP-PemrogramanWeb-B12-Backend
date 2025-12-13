@@ -13,7 +13,6 @@ import {
   validateBody,
 } from '@/common';
 
-import { TrueOrFalseService } from './true-or-false.service';
 import {
   CheckAnswerSchema,
   CreateTrueOrFalseSchema,
@@ -22,6 +21,7 @@ import {
   type IUpdateTrueOrFalse,
   UpdateTrueOrFalseSchema,
 } from './schema';
+import { TrueOrFalseService } from './true-or-false.service';
 
 export const TrueOrFalseController = Router()
   .post(
