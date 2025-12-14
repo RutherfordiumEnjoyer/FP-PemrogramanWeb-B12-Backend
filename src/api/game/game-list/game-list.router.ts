@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-/* eslint-disable import/no-default-export */
 import { Router } from 'express';
 
 import airplaneRouter from './airplane/airplane.router';
 import { AnagramController } from './anagram/anagram.controller';
+import { CrosswordController } from './crossword/crossword.controller';
 import { MazeChaseController } from './maze-chase/maze-chase.controller';
 import { PairOrNoPairController } from './pair-or-no-pair/pair-or-no-pair.controller';
 import { QuizController } from './quiz/quiz.controller';
@@ -13,17 +12,18 @@ import { SpinTheWheelController } from './spin-the-wheel/spin-the-wheel.controll
 import { TrueOrFalseController } from './true-or-false/true-or-false.controller';
 import { TypeSpeedController } from './type-speed/type-speed.controller';
 
-const GameListRouter = Router();
+const gameListRouter = Router();
 
-GameListRouter.use('/quiz', QuizController);
-GameListRouter.use('/maze-chase', MazeChaseController);
-GameListRouter.use('/sliding-puzzle', SlidingPuzzleController);
-GameListRouter.use('/speed-sorting', SpeedSortingController);
-GameListRouter.use('/anagram', AnagramController);
-GameListRouter.use('/pair-or-no-pair', PairOrNoPairController);
-GameListRouter.use('/type-speed', TypeSpeedController);
-GameListRouter.use('/airplane', airplaneRouter);
-GameListRouter.use('/spin-the-wheel', SpinTheWheelController);
-GameListRouter.use('/true-or-false', TrueOrFalseController);
+gameListRouter.use('/quiz', QuizController);
+gameListRouter.use('/maze-chase', MazeChaseController);
+gameListRouter.use('/sliding-puzzle', SlidingPuzzleController);
+gameListRouter.use('/speed-sorting', SpeedSortingController);
+gameListRouter.use('/anagram', AnagramController);
+gameListRouter.use('/crossword', CrosswordController); 
+gameListRouter.use('/pair-or-no-pair', PairOrNoPairController);
+gameListRouter.use('/type-speed', TypeSpeedController);
+gameListRouter.use('/airplane', airplaneRouter); 
+gameListRouter.use('/spin-the-wheel', SpinTheWheelController);
+gameListRouter.use('/true-or-false', TrueOrFalseController);
 
-export default GameListRouter;
+export { gameListRouter };
