@@ -19,10 +19,15 @@ gameListRouter.use('/maze-chase', MazeChaseController);
 gameListRouter.use('/sliding-puzzle', SlidingPuzzleController);
 gameListRouter.use('/speed-sorting', SpeedSortingController);
 gameListRouter.use('/anagram', AnagramController);
-gameListRouter.use('/crossword', CrosswordController); 
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+gameListRouter.use('/crossword', CrosswordController);
+
 gameListRouter.use('/pair-or-no-pair', PairOrNoPairController);
 gameListRouter.use('/type-speed', TypeSpeedController);
-gameListRouter.use('/airplane', airplaneRouter); 
+
+gameListRouter.use('/airplane', airplaneRouter);
+
 gameListRouter.use('/spin-the-wheel', SpinTheWheelController);
 gameListRouter.use('/true-or-false', TrueOrFalseController);
 
