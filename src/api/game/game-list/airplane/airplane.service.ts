@@ -1,17 +1,23 @@
-import { type Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { type Request } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { v4 as uuidv4 } from 'uuid';
 
-import { FileManager } from '@/utils';
-
 import { prisma } from '../../../../common/config';
 import { ErrorResponse } from '../../../../common/response';
+import { FileManager } from '@/utils';
+
 import { type ICreateAirplane } from './schema/create-airplane.schema';
 import { type IUpdateAirplane } from './schema/update-airplane.schema';
 
+// --- DEFINISI TYPE TAMBAHAN ---
 interface ICreateAirplaneParameters extends ICreateAirplane {
   thumbnail_image: Express.Multer.File;
+}
+
+// FIX: Kita extend interface update untuk mengakui keberadaan 'is_published'
+interface IUpdateAirplaneParameters extends IUpdateAirplane {
+  is_published?: string | boolean; // Bisa string (dari FormData) atau boolean (Raw JSON)
 }
 
 export class AirplaneService {
@@ -121,7 +127,7 @@ export class AirplaneService {
 
   static async update(
     id: string,
-    data: IUpdateAirplane,
+    data: IUpdateAirplaneParameters, // <--- GUNAKAN INTERFACE BARU DI SINI
     creatorId: string,
     thumbnailFile?: Express.Multer.File,
   ) {
@@ -136,9 +142,22 @@ export class AirplaneService {
       );
     }
 
+    // --- FIX: Handle is_published logic ---
+    let isPublished = game.is_published;
+
+    // TypeScript tidak akan error lagi di sini karena sudah ada di interface IUpdateAirplaneParameters
+    if (data.is_published !== undefined) {
+      if (typeof data.is_published === 'string') {
+        isPublished = data.is_published === 'true';
+      } else {
+        isPublished = Boolean(data.is_published);
+      }
+    }
+
     const updateData: Record<string, unknown> = {
       name: data.title,
       description: data.description,
+      is_published: isPublished,
       game_json: data.game_data
         ? (data.game_data as unknown as Prisma.InputJsonValue)
         : undefined,
