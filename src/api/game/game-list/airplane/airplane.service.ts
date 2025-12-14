@@ -1,23 +1,22 @@
-import { Prisma } from '@prisma/client';
+import { type Prisma } from '@prisma/client';
 import { type Request } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { v4 as uuidv4 } from 'uuid';
 
-import { prisma } from '../../../../common/config';
-import { ErrorResponse } from '../../../../common/response';
 import { FileManager } from '@/utils';
 
+import { prisma } from '../../../../common/config';
+import { ErrorResponse } from '../../../../common/response';
 import { type ICreateAirplane } from './schema/create-airplane.schema';
 import { type IUpdateAirplane } from './schema/update-airplane.schema';
 
-// --- DEFINISI TYPE TAMBAHAN ---
 interface ICreateAirplaneParameters extends ICreateAirplane {
   thumbnail_image: Express.Multer.File;
 }
 
 // FIX: Kita extend interface update untuk mengakui keberadaan 'is_published'
 interface IUpdateAirplaneParameters extends IUpdateAirplane {
-  is_published?: string | boolean; // Bisa string (dari FormData) atau boolean (Raw JSON)
+  is_published?: string | boolean;
 }
 
 export class AirplaneService {
@@ -127,7 +126,7 @@ export class AirplaneService {
 
   static async update(
     id: string,
-    data: IUpdateAirplaneParameters, // <--- GUNAKAN INTERFACE BARU DI SINI
+    data: IUpdateAirplaneParameters,
     creatorId: string,
     thumbnailFile?: Express.Multer.File,
   ) {
@@ -145,13 +144,12 @@ export class AirplaneService {
     // --- FIX: Handle is_published logic ---
     let isPublished = game.is_published;
 
-    // TypeScript tidak akan error lagi di sini karena sudah ada di interface IUpdateAirplaneParameters
     if (data.is_published !== undefined) {
-      if (typeof data.is_published === 'string') {
-        isPublished = data.is_published === 'true';
-      } else {
-        isPublished = Boolean(data.is_published);
-      }
+      // FIX LINTER: Gunakan Ternary Operator daripada if-else sederhana
+      isPublished =
+        typeof data.is_published === 'string'
+          ? data.is_published === 'true'
+          : Boolean(data.is_published);
     }
 
     const updateData: Record<string, unknown> = {
