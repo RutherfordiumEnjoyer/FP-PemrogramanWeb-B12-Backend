@@ -195,7 +195,7 @@ export class AirplaneController {
       await AirplaneService.delete(request.params.id, creatorId as string);
       response
         .status(StatusCodes.OK)
-        .json({ success: true, message: 'Game deleted successfully' });
+        .json({ success: true, message: 'Game deleted successfully' }); //delete
     } catch (error) {
       next(error);
     }
